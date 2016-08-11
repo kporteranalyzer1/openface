@@ -16,7 +16,8 @@
 
 
 require 'torch'
-require 'nn'
+require 'cltorch'
+require 'clnn'
 require 'dpnn'
 require 'image'
 
@@ -35,7 +36,7 @@ cmd:text('Face recognition server.')
 cmd:text()
 cmd:text('Options:')
 
-cmd:option('-model', './models/openface/nn4.v1.t7', 'Path to model.')
+cmd:option('-model', './models/openface/nn4.small2.v1.ascii.t7', 'Path to model.')
 cmd:option('-imgDim', 96, 'Image dimension. nn1=224, nn4=96')
 cmd:option('-cuda', false)
 cmd:text()
@@ -43,8 +44,9 @@ cmd:text()
 opt = cmd:parse(arg or {})
 -- print(opt)
 
-net = torch.load(opt.model)
+net = torch.load(opt.model, 'ascii')
 net:evaluate()
+net:cl()
 -- print(net)
 
 local imgCuda = nil
@@ -55,14 +57,14 @@ if opt.cuda then
    imgCuda = torch.CudaTensor(1, 3, opt.imgDim, opt.imgDim)
 end
 
-local img = torch.Tensor(1, 3, opt.imgDim, opt.imgDim)
+local img = torch.ClTensor(1, 3, opt.imgDim, opt.imgDim)
 while true do
    -- Read a path to an image on stdin and output the representation
    -- as a CSV.
    local imgPath = io.read("*line")
    if imgPath and imgPath:len() ~= 0 then
       img[1] = image.load(imgPath, 3, byte)
-      img[1] = image.scale(img[1], opt.imgDim, opt.imgDim)
+      -- img[1] = image.scale(img[1], opt.imgDim, opt.imgDim)
       local rep
       if opt.cuda then
          imgCuda:copy(img)
